@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     "debug_toolbar",
     # Third-party apps
     'rest_framework',  # Django REST Framework
-    
+    # My apps
+    'store',
 ]
 
 MIDDLEWARE = [
