@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "debug_toolbar",
     # Third-party apps
     'rest_framework',  # Django REST Framework
+    'rest_framework.authtoken',
     # My apps
     'store',
 ]
@@ -134,3 +135,14 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',  # Use token authentication
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',  # Allow anyone to view, but only authenticated users to modify
+    ],  
+}
