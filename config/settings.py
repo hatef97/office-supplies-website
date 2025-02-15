@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',  # Django REST Framework
     'rest_framework.authtoken',
+    'django_filters',
     # My apps
     'store',
 ]

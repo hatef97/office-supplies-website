@@ -24,11 +24,14 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    products = ProductSerializer(many=True, read_only=True)
+    product_ids = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
         fields = ["id", "name", "description", "products"]
+        
+    def get_product_ids(self, obj):
+        return list(obj.products.values_list("id", flat=True))    
 
 
 class PageContentSerializer(serializers.ModelSerializer):
