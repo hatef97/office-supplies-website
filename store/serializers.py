@@ -1,6 +1,25 @@
 from rest_framework import serializers
 
+from django.utils.text import slugify
+
 from .models import Category, Product, PageContent, TeamMember
+
+
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    num_of_products = serializers.IntegerField(source='products.count', read_only=True)
+    
+    class Meta:
+        model = Category
+        fields = ["id", "name", "description", "num_of_products"]
+
+    def validate(self, data):
+        if len(data['name']) < 3:
+            raise serializers.ValidationError('Category title should be at least 3.')
+        return data
+
+
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -21,23 +40,26 @@ class ProductSerializer(serializers.ModelSerializer):
         if value < 0:
             raise serializers.ValidationError("Stock cannot be negative.")
         return value
+    
+    def create(self, validated_data):
+          product = Product(**validated_data)
+          product.slug = slugify(product.name)
+          product.save()
+          return product
 
 
-class CategorySerializer(serializers.ModelSerializer):
-    product_ids = serializers.SerializerMethodField()
 
-    class Meta:
-        model = Category
-        fields = ["id", "name", "description", "products"]
-        
-    def get_product_ids(self, obj):
-        return list(obj.products.values_list("id", flat=True))    
+
 
 
 class PageContentSerializer(serializers.ModelSerializer):
     class Meta:
         model = PageContent
         fields = ["id", "page_name", "content"]
+
+
+
+
 
 
 class TeamMemberSerializer(serializers.ModelSerializer):
