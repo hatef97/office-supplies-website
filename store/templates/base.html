@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Northern Office Supplies</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="{% url 'about' %}">About</a></li>
+                <li><a href="{% url 'terms' %}">Terms</a></li>
+                <li><a href="/store/products/">Products</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <main>
+        {% block content %}
+        <!-- Page content will go here -->
+        {% endblock %}
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 Northern Office Supplies. All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load static %}
+
+    {% block content %}
+    <section class="container mx-auto my-12">
+        <h1 class="text-4xl font-bold text-orange-600 mb-6">Terms of Service</h1>
+        {% if terms_content %}
+            <p class="text-gray-700 text-lg">
+                {{ terms_content.content|linebreaks }}
+            </p>
+        {% else %}
+            <p class="text-gray-600">Terms of Service will be updated soon.</p>
+        {% endif %}
+    </section>
+{% endblock %}

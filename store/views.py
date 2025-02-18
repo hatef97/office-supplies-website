@@ -7,6 +7,8 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from django.views.generic import TemplateView
+
 
 
 from .models import Category, Product, PageContent, TeamMember
@@ -69,8 +71,16 @@ class PageContentViewSet(ModelViewSet):
     serializer_class = PageContentSerializer
 
 
-
-
 class TeamMemberViewSet(ModelViewSet):
     queryset = TeamMember.objects.all()
     serializer_class = TeamMemberSerializer
+
+
+
+
+class AboutView(TemplateView):
+    template_name = "store/about.html"
+
+class TermsView(TemplateView):
+    template_name = "store/terms.html"
+
