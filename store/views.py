@@ -15,7 +15,7 @@ from .models import Category, Product, PageContent, TeamMember
 from .paginations import DefaultPagination
 from .serializers import (
     CategorySerializer, ProductSerializer,
-    PageContentSerializer, TeamMemberSerializer
+    PageContentSerializer, TeamMemberSerializer, CommentSerializer
 )
 
 
@@ -75,6 +75,25 @@ class TeamMemberViewSet(ModelViewSet):
     queryset = TeamMember.objects.all()
     serializer_class = TeamMemberSerializer
 
+
+
+
+class CommentViewSet(ModelViewSet):
+    serializer_class = CommentSerializer    
+    
+    def get_queryset(self):
+        product_pk = self.kwargs['product_pk']
+        return Comment.objects.filter(product_id=product_pk).all()
+
+    
+    def get_serializer_context(self):
+        return {'product_pk': self.kwargs['product_pk']}
+    
+    
+    def destroy(self, request, pk):
+        Comment = get_object_or_404(Comment, pk=pk)
+        Comment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 
