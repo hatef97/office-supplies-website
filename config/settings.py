@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "debug_toolbar",
     # Third-party apps
     'rest_framework',  # Django REST Framework
+    'djoser',
     'rest_framework.authtoken',
     'django_filters',
     # My apps
@@ -143,12 +144,15 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',  # Use token authentication
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',  # Allow anyone to view, but only authenticated users to modify
-    ],  
+    'COERCE_DECIMAL_TO_STRING': False,
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ),
 }
+
+
+# SIMPLE_JWT = {
+#     'AUTH_HEADER_TYPES': ('JWT', ),
+#     'ACCESS_TOKEN_LIFETIME': timedelta(days=1)
+# }
