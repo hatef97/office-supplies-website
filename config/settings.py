@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django_filters',
     # My apps
     'store',
+    'core',
 ]
 
 MIDDLEWARE = [
@@ -156,3 +157,13 @@ REST_FRAMEWORK = {
 #     'AUTH_HEADER_TYPES': ('JWT', ),
 #     'ACCESS_TOKEN_LIFETIME': timedelta(days=1)
 # }
+
+DJOSER = {
+    'SERIALIZERS': {
+        'user_create': 'core.serializers.UserCreateSerializer',
+        'current_user': 'core.serializers.UserSerializer'
+    }
+}
+
+
+AUTH_USER_MODEL = 'core.CustomUser'
