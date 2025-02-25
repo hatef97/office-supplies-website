@@ -1,4 +1,7 @@
 from django.db import models
+from django.conf import settings
+
+
 
 class Category(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -6,6 +9,8 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
+
 
 class Product(models.Model):
     name = models.CharField(max_length=255)
@@ -19,12 +24,35 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+
+
+class Customer(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    phone_number = models.CharField(max_length=255)
+    birth_date = models.DateField(null=True, blank=True)
+    
+    def __str__(self) -> str:
+        return f'{self.user.first_name} {self.user.last_name}'
+    
+    @property
+    def full_name(self):
+        return f'{self.user.first_name} {self.user.last_name}'
+    
+    class Meta:
+        permissions = [
+            ('send_private_email', 'Can send private email to user by the button'),
+        ]
+
+
+
 class PageContent(models.Model):
     page_name = models.CharField(max_length=255, unique=True)
     content = models.TextField()
 
     def __str__(self):
         return self.page_name
+
+
 
 class TeamMember(models.Model):
     name = models.CharField(max_length=255)
