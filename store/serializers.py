@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from django.utils.text import slugify
 
-from .models import Category, Product, PageContent, TeamMember, Comment
+from .models import Category, Product, PageContent, TeamMember, Comment, Customer
 
 
 
@@ -89,4 +89,3 @@ class CustomerSerializer(serializers.ModelSerializer):
         model = Customer
         fields = ['id', 'user', 'birth_date']      
         read_only_fields = ['user']
-        

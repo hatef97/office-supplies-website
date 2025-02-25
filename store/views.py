@@ -2,7 +2,8 @@ from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser, IsAuthenticated
 from rest_framework.filters import OrderingFilter, SearchFilter
 
 from django.shortcuts import get_object_or_404
@@ -11,11 +12,12 @@ from django.views.generic import TemplateView
 
 
 
-from .models import Category, Product, PageContent, TeamMember
+from .models import Category, Product, PageContent, TeamMember, Customer
 from .paginations import DefaultPagination
 from .serializers import (
     CategorySerializer, ProductSerializer,
-    PageContentSerializer, TeamMemberSerializer, CommentSerializer
+    PageContentSerializer, TeamMemberSerializer, CommentSerializer,
+    CustomerSerializer,
 )
 
 
@@ -94,6 +96,28 @@ class CommentViewSet(ModelViewSet):
         Comment = get_object_or_404(Comment, pk=pk)
         Comment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+class CustomerViewSet(ModelViewSet):
+    serializer_class = CustomerSerializer
+    queryset = Customer.objects.all()
+    permission_classes = [IsAdminUser]
+    
+    
+    @action(detail=False, methods=['GET', 'PUT'], permission_classes=[IsAuthenticated])
+    def me(self, request):
+        user_id = request.user.id
+        customer = Customer.objects.get(user_id=user_id)
+        if request.method == 'GET':
+            serializer = CustomerSerializer(customer)
+            return Response(serializer.data)
+        elif request.method == 'PUT':
+            serializer = CustomerSerializer(customer, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+
 
 
 
