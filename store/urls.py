@@ -8,6 +8,7 @@ from . import views
 router = routers.DefaultRouter()
 router.register(r'categories', views.CategoryViewSet, basename='category')
 router.register(r'products', views.ProductViewSet, basename='product')
+router.register(r'cutomers', views.CustomerViewSet, basename='customer')
 router.register(r'pages', views.PageContentViewSet, basename='pagecontent')
 router.register(r'team', views.TeamMemberViewSet, basename='teammember')
 
