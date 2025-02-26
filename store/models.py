@@ -11,6 +11,11 @@ class Category(models.Model):
         return self.name
 
 
+class Discount(models.Model):
+    discount = models.FloatField()
+    description = models.CharField(max_length=255)
+
+
 
 class Product(models.Model):
     name = models.CharField(max_length=255)
@@ -20,6 +25,7 @@ class Product(models.Model):
     stock = models.IntegerField(default=0)
     image = models.ImageField(upload_to='products/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    discounts = models.ManyToManyField(Discount, blank=True)
 
     def __str__(self):
         return self.name
