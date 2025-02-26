@@ -110,6 +110,43 @@ class CustomerAdmin(admin.ModelAdmin):
     def email(self, customer):
         return customer.user.email
 
+
+
+class OrderItemInline(admin.TabularInline):
+    model = models.OrderItem
+    fields = ['product', 'quantity', 'price']
+    extra = 0
+    min_num = 1
+    readonly_fields = ['price']
+
+
+
+@admin.register(models.OrderItem)
+class OrderItemAdmin(admin.ModelAdmin):
+    list_display = ['order', 'product', 'quantity', 'price']
+    autocomplete_fields = ['product', ]
+
+
+
+@admin.register(models.Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ['id', 'customer', 'status', 'datetime_created', 'num_of_items']
+    list_editable = ['status']
+    list_per_page = 10
+    ordering = ['-datetime_created']
+    inlines = [OrderItemInline]
+
+    def get_queryset(self, request):
+        return super() \
+                .get_queryset(request) \
+                .prefetch_related('items') \
+                .annotate(
+                    items_count=Count('items')
+                )
+
+    @admin.display(ordering='items_count', description='# items')
+    def num_of_items(self, order):
+        return order.items_count
     
     
 admin.site.register(models.Category)

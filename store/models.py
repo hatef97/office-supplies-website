@@ -75,6 +75,14 @@ class OrderItem(models.Model):
     class Meta:
         unique_together = [['order', 'product']]
 
+    def save(self, *args, **kwargs):
+        if not self.price:
+            self.price = self.product.price
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f'{self.quantity} x {self.product.name}'
+
 
 
 class Address(models.Model):
