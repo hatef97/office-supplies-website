@@ -107,18 +107,16 @@ class CustomerViewSet(ModelViewSet):
     
     @action(detail=False, methods=['GET', 'PUT'], permission_classes=[IsAuthenticated])
     def me(self, request):
-        customer, created = Customer.objects.get_or_create(user=request.user)
-
+        user_id = request.user.id
+        customer = Customer.objects.get(user_id=user_id)
         if request.method == 'GET':
             serializer = CustomerSerializer(customer)
             return Response(serializer.data)
-
         elif request.method == 'PUT':
-            serializer = CustomerSerializer(customer, data=request.data, partial=True)
+            serializer = CustomerSerializer(customer, data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
-
 
 
 
