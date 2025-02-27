@@ -147,7 +147,23 @@ class OrderAdmin(admin.ModelAdmin):
     @admin.display(ordering='items_count', description='# items')
     def num_of_items(self, order):
         return order.items_count
-    
+
+
+
+class CartItemInline(admin.TabularInline):
+    model = models.CartItem
+    fields = ['id', 'product', 'quantity']
+    extra = 0
+    min_num = 1
+
+
+
+@admin.register(models.Cart)
+class CartAdmin(admin.ModelAdmin):
+    list_display = ['id', 'created_at']
+    inlines = [CartItemInline]
+
+
     
 admin.site.register(models.Category)
 admin.site.register(models.PageContent)
