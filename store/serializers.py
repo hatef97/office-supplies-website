@@ -254,3 +254,7 @@ class OrderCreateSerializer(serializers.Serializer):
 
 
 
+class OrderUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['status']
