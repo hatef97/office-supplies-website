@@ -87,3 +87,15 @@ class CustomerSerializer(serializers.ModelSerializer):
         model = Customer
         fields = ['id', 'user', 'birth_date']      
         read_only_fields = ['user']
+
+
+
+class CartProductSeializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = [
+            'id',
+            'name',
+            'price',
+            ]
+
