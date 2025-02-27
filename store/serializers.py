@@ -180,3 +180,16 @@ class OrderItemSerializer(serializers.ModelSerializer):
             'price'
         ]
 
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True)
+    
+    class Meta:
+        model = Order
+        fields = [
+            'id',
+            'status',
+            'datetime_created',
+            'items'
+            ]        
