@@ -166,3 +166,17 @@ class OrderCustomerSerializer(serializers.ModelSerializer):
         model = Customer        
         fields = ['id', 'first_name', 'last_name', 'email', 'birth_date']
 
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product = CartProductSeializer()
+    
+    class Meta:
+        model = OrderItem
+        fields = [
+            'id',
+            'product',
+            'quantity',
+            'price'
+        ]
+
