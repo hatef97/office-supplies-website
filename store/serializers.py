@@ -128,3 +128,17 @@ class UpadateCartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = ['quantity']
+
+
+
+class CartItemSerializer(serializers.ModelSerializer):
+    product = CartProductSeializer()
+    item_total = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CartItem
+        fields = ['id', 'product', 'quantity', 'item_total']
+        
+    def get_item_total(self, cart_item):
+        return cart_item.quantity * cart_item.product.price    
+
