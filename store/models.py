@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 
+from uuid import uuid4
+
 
 
 class Category(models.Model):
@@ -9,6 +11,7 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
 
 
 class Discount(models.Model):
@@ -128,3 +131,19 @@ class Comment(models.Model):
     body = models.TextField()
     datetime_created = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=2, choices=COMMENT_STATUS, default=COMMENT_STATUS_WAITING)
+
+
+
+class Cart(models.Model):  
+    id = models.UUIDField(primary_key=True, default=uuid4)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='cart_items')
+    quantity = models.PositiveSmallIntegerField()
+
+    class Meta:
+        unique_together = [['cart', 'product']]

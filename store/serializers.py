@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from django.utils.text import slugify
 
-from .models import Category, Product, PageContent, TeamMember, Comment, Customer
+from .models import *
 
 
 
@@ -50,14 +50,10 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 
-
-
 class PageContentSerializer(serializers.ModelSerializer):
     class Meta:
         model = PageContent
         fields = ["id", "page_name", "content"]
-
-
 
 
 
@@ -68,6 +64,7 @@ class TeamMemberSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "role", "bio", "image"]
         
         
+
 
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -82,6 +79,7 @@ class CommentSerializer(serializers.ModelSerializer):
         product_id = self.context['product_pk']    
         return Comment.objects.create(product_id=product_id, **validated_data)
         
+
 
 
 class CustomerSerializer(serializers.ModelSerializer):
