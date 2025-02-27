@@ -193,3 +193,20 @@ class OrderSerializer(serializers.ModelSerializer):
             'datetime_created',
             'items'
             ]        
+
+
+
+class OrderForAdminSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True)
+    customer = OrderCustomerSerializer()
+    
+    class Meta:
+        model = Order
+        fields = [
+            'id',
+            'customer',
+            'status',
+            'datetime_created',
+            'items'
+            ]        
+       
