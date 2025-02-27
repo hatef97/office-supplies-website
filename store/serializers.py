@@ -157,4 +157,12 @@ class CartSerializer(serializers.ModelSerializer):
         return sum([item.quantity * item.product.price for item in cart.items.all()]) 
     
 
-    
+
+class OrderCustomerSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(max_length=255, source='user.first_name')
+    last_name = serializers.CharField(max_length=255, source='user.last_name')
+    email = serializers.EmailField(max_length=255, source='user.email')
+    class Meta:
+        model = Customer        
+        fields = ['id', 'first_name', 'last_name', 'email', 'birth_date']
+
