@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from django.utils.text import slugify
+from django.db import transaction
 
 from .models import *
 
@@ -209,4 +210,47 @@ class OrderForAdminSerializer(serializers.ModelSerializer):
             'datetime_created',
             'items'
             ]        
-       
+
+
+
+class OrderCreateSerializer(serializers.Serializer):
+    cart_id = serializers.UUIDField()
+    
+    def validate_cart_id(self, cart_id):
+        try:
+            if Cart.objects.prefetch_related('items').get(id=cart_id).items.count() == 0:
+                raise serializers.ValidationError('Your cart is empty. Please add some products to it first!')
+        except Cart.DoesNotExist:    
+            raise serializers.ValidationError('There is no cart with this cart id!')
+        
+        return cart_id
+    
+    def save(self, **kwargs):
+        with transaction.atomic():
+            cart_id = self.validated_data['cart_id']
+            user_id = self.context['user_id']
+            customer = Customer.objects.get(user_id=user_id)
+
+            order = Order()
+            order.customer = customer
+            order.save()
+
+            cart_items = CartItem.objects.select_related('product').filter(cart_id=cart_id)
+
+            order_items = [
+                OrderItem(
+                    order=order,
+                    product=cart_item.product,
+                    price=cart_item.product.price,
+                    quantity=cart_item.quantity,
+                ) for cart_item in cart_items
+            ]
+
+            OrderItem.objects.bulk_create(order_items)
+
+            Cart.objects.get(id=cart_id).delete()
+
+            return order
+
+
+
