@@ -2,6 +2,8 @@ from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.viewsets import GenericViewSet
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, DestroyModelMixin
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser, IsAuthenticated
 from rest_framework.filters import OrderingFilter, SearchFilter
@@ -14,11 +16,7 @@ from django.views.generic import TemplateView
 
 from .models import Category, Product, PageContent, TeamMember, Customer
 from .paginations import DefaultPagination
-from .serializers import (
-    CategorySerializer, ProductSerializer,
-    PageContentSerializer, TeamMemberSerializer, CommentSerializer,
-    CustomerSerializer,
-)
+from .serializers import *
 
 
 
@@ -138,8 +136,16 @@ class CartItemViewSet(ModelViewSet):
     def get_serializer_context(self):
         return {'cart_pk': self.kwargs['cart_pk']}
 
-    
 
+
+class CartViewSet(CreateModelMixin,
+                   RetrieveModelMixin,
+                   DestroyModelMixin,
+                   GenericViewSet):
+    serializer_class = CartSerializer 
+    queryset = Cart.objects.prefetch_related('items__product').all()
+    
+    
 
 class AboutView(TemplateView):
     template_name = "store/about.html"
