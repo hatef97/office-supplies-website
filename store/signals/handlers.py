@@ -11,4 +11,3 @@ def create_customer_profile_for_newly_created_user(sender,
                                                    **kwargs):
     if created:
         Customer.objects.create(user=instance)
-        
