@@ -154,4 +154,3 @@ class ProductModelTest(TestCase):
     def test_created_at_auto_now_add(self):
         """Test created_at is set on creation."""
         self.assertIsNotNone(self.product.created_at)
-        
