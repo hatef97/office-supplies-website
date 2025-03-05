@@ -1,7 +1,14 @@
 from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils.timezone import now
 from django.contrib.auth import get_user_model
+
 from store.models import *
+
 from decimal import Decimal
+
+
+
 
 User = get_user_model()
 
@@ -64,3 +71,87 @@ class DiscountModelTest(TestCase):
         """Optionally, if you want to add a __str__ method to Discount, you could test it like this."""
         self.discount.description = "Holiday Discount"
         self.discount.save()
+
+
+
+class ProductModelTest(TestCase):
+
+    def setUp(self):
+        self.category = Category.objects.create(
+            name="Electronics",
+            description="All kinds of electronics"
+        )
+
+        self.discount1 = Discount.objects.create(
+            discount=10.0,
+            description="Spring Sale"
+        )
+
+        self.discount2 = Discount.objects.create(
+            discount=15.0,
+            description="Holiday Discount"
+        )
+
+        self.product = Product.objects.create(
+            name="Smartphone",
+            description="Latest smartphone with high specs",
+            price=599.99,
+            category=self.category,
+            stock=50,
+            created_at=now(),
+        )
+
+        self.product.discounts.add(self.discount1, self.discount2)
+
+    def test_product_creation(self):
+        """Test product instance is created correctly."""
+        self.assertEqual(self.product.name, "Smartphone")
+        self.assertEqual(self.product.description, "Latest smartphone with high specs")
+        self.assertEqual(self.product.price, 599.99)
+        self.assertEqual(self.product.category, self.category)
+        self.assertEqual(self.product.stock, 50)
+
+    def test_string_representation(self):
+        """Test the __str__ method of Product."""
+        self.assertEqual(str(self.product), "Smartphone")
+
+    def test_category_relationship(self):
+        """Test that product is linked to the correct category."""
+        self.assertEqual(self.product.category.name, "Electronics")
+
+    def test_discounts_relationship(self):
+        """Test the many-to-many relationship with Discount."""
+        discounts = self.product.discounts.all()
+        self.assertEqual(discounts.count(), 2)
+        self.assertIn(self.discount1, discounts)
+        self.assertIn(self.discount2, discounts)
+
+    def test_image_field_blank(self):
+        """Test that image field can be left blank."""
+        self.assertFalse(self.product.image)
+
+    def test_image_upload(self):
+        """Test uploading an image to the product."""
+        image = SimpleUploadedFile(
+            "test_image.jpg",
+            b"file_content",
+            content_type="image/jpeg"
+        )
+        self.product.image = image
+        self.product.save()
+        self.assertTrue(self.product.image.name.startswith('products/test_image'))
+
+    def test_default_stock(self):
+        """Test stock default value."""
+        product_without_stock = Product.objects.create(
+            name="Tablet",
+            description="High performance tablet",
+            price=299.99,
+            category=self.category
+        )
+        self.assertEqual(product_without_stock.stock, 0)
+
+    def test_created_at_auto_now_add(self):
+        """Test created_at is set on creation."""
+        self.assertIsNotNone(self.product.created_at)
+        
