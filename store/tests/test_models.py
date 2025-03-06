@@ -205,3 +205,49 @@ class CustomerModelTest(TestCase):
         """Test that the custom permission 'send_private_email' is correctly defined."""
         permission = Customer._meta.permissions
         self.assertIn(('send_private_email', 'Can send private email to user by the button'), permission)
+
+
+
+class OrderModelTest(TestCase):
+
+    def setUp(self):
+        # Create a user and customer for the order
+        self.user = User.objects.create_user(
+            username='testuser',
+            first_name='John',
+            last_name='Doe',
+            email='john@example.com',
+            password='testpassword123'
+        )
+        Customer.objects.filter(user=self.user).delete()
+        self.customer = Customer.objects.create(
+            user=self.user,
+            phone_number="123-456-7890"
+        )
+
+        # Create an order instance
+        self.order = Order.objects.create(
+            customer=self.customer,
+            status=Order.ORDER_STATUS_UNPAID
+        )
+
+    def test_order_creation(self):
+        """Test that an Order instance is created correctly."""
+        self.assertEqual(self.order.customer, self.customer)
+        self.assertEqual(self.order.status, Order.ORDER_STATUS_UNPAID)
+        self.assertIsNotNone(self.order.datetime_created)
+
+    def test_order_status_choices(self):
+        """Test that status choices are correctly stored."""
+        self.order.status = Order.ORDER_STATUS_PAID
+        self.order.save()
+        self.assertEqual(self.order.status, Order.ORDER_STATUS_PAID)
+
+        self.order.status = Order.ORDER_STATUS_CANCELED
+        self.order.save()
+        self.assertEqual(self.order.status, Order.ORDER_STATUS_CANCELED)
+
+    def test_order_default_status(self):
+        """Test that the default order status is 'unpaid'."""
+        new_order = Order.objects.create(customer=self.customer)
+        self.assertEqual(new_order.status, Order.ORDER_STATUS_UNPAID)
