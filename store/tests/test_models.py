@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from store.models import *
 
 from decimal import Decimal
+from datetime import date
 
 
 
@@ -154,3 +155,53 @@ class ProductModelTest(TestCase):
     def test_created_at_auto_now_add(self):
         """Test created_at is set on creation."""
         self.assertIsNotNone(self.product.created_at)
+
+
+
+class CustomerModelTest(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="johndoe",
+            first_name="John",
+            last_name="Doe",
+            email="john@example.com",
+            password="testpassword123"
+        )
+
+        Customer.objects.filter(user=self.user).delete()
+
+        self.customer = Customer.objects.create(
+            user=self.user,
+            phone_number="123-456-7890",
+            birth_date=date(1990, 5, 20)
+        )
+
+
+    def test_customer_creation(self):
+        """Test customer instance is created correctly."""
+        self.assertEqual(self.customer.user, self.user)
+        self.assertEqual(self.customer.phone_number, "123-456-7890")  # Check the phone number
+        self.assertEqual(self.customer.birth_date, date(1990, 5, 20))
+
+    def test_string_representation(self):
+        """Test the __str__ method of Customer."""
+        self.assertEqual(str(self.customer), "John Doe")
+
+    def test_full_name_property(self):
+        """Test the full_name property."""
+        self.assertEqual(self.customer.full_name, "John Doe")
+
+    def test_birth_date_can_be_blank(self):
+        """Test birth_date can be blank or null."""
+        Customer.objects.filter(user=self.user).delete()
+        customer_without_birth_date = Customer.objects.create(
+            user=self.user,
+            phone_number="999-999-9999"
+        )
+        self.assertIsNone(customer_without_birth_date.birth_date)
+
+    def test_custom_permission_exists(self):
+        """Test that the custom permission 'send_private_email' is correctly defined."""
+        permission = Customer._meta.permissions
+        self.assertIn(('send_private_email', 'Can send private email to user by the button'), permission)
