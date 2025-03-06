@@ -7,6 +7,8 @@ from store.models import *
 
 from decimal import Decimal
 from datetime import date
+import uuid
+
 
 
 
@@ -450,4 +452,21 @@ class CommentModelTest(TestCase):
         expected_str = f"Comment by Sarah on {self.product.name}"
         actual_str = f"Comment by {comment.name} on {comment.product.name}"
         self.assertEqual(actual_str, expected_str)
-                
+
+
+
+class CartModelTest(TestCase):
+
+    def test_cart_creation(self):
+        """Test that a Cart instance can be created and fields are set correctly."""
+        cart = Cart.objects.create()
+
+        self.assertIsInstance(cart.id, uuid.UUID)  # Primary key should be a UUID
+        self.assertIsNotNone(cart.created_at)  # Timestamp should be auto-generated
+
+    def test_cart_unique_id(self):
+        """Test that each cart has a unique UUID."""
+        cart1 = Cart.objects.create()
+        cart2 = Cart.objects.create()
+
+        self.assertNotEqual(cart1.id, cart2.id)
