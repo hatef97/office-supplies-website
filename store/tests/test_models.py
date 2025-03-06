@@ -251,3 +251,78 @@ class OrderModelTest(TestCase):
         """Test that the default order status is 'unpaid'."""
         new_order = Order.objects.create(customer=self.customer)
         self.assertEqual(new_order.status, Order.ORDER_STATUS_UNPAID)
+
+
+
+class OrderItemModelTest(TestCase):
+
+    def setUp(self):
+        # Create necessary related objects
+        self.user = User.objects.create_user(
+            username='testuser',
+            first_name='John',
+            last_name='Doe',
+            email='john@example.com',
+            password='testpassword123'
+        )
+        Customer.objects.filter(user=self.user).delete()
+        self.customer = Customer.objects.create(
+            user=self.user,
+            phone_number="123-456-7890"
+        )
+        self.category = Category.objects.create(name='Office Supplies')
+        self.discount = Discount.objects.create(discount=10.0, description="Seasonal Discount")
+
+        self.product = Product.objects.create(
+            name='Notebook',
+            description='A high-quality notebook.',
+            price=Decimal('5.99'),
+            category=self.category,
+            stock=100
+        )
+        self.product.discounts.add(self.discount)
+
+        self.order = Order.objects.create(
+            customer=self.customer,
+            status=Order.ORDER_STATUS_UNPAID
+        )
+
+    def test_order_item_creation(self):
+        """Test creating an OrderItem and its basic fields."""
+        order_item = OrderItem.objects.create(
+            order=self.order,
+            product=self.product,
+            quantity=2,
+            price=Decimal('5.99')
+        )
+        self.assertEqual(order_item.order, self.order)
+        self.assertEqual(order_item.product, self.product)
+        self.assertEqual(order_item.quantity, 2)
+        self.assertEqual(order_item.price, Decimal('5.99'))
+
+    def test_order_item_price_defaults_to_product_price(self):
+        """Test that price defaults to product price if not provided."""
+        order_item = OrderItem.objects.create(
+            order=self.order,
+            product=self.product,
+            quantity=3
+        )
+        self.assertEqual(order_item.price, self.product.price)
+
+    def test_unique_together_constraint(self):
+        """Test that an order cannot contain duplicate products."""
+        OrderItem.objects.create(order=self.order, product=self.product, quantity=1, price=Decimal('5.99'))
+
+        with self.assertRaises(Exception):  # IntegrityError or Django's built-in catch
+            OrderItem.objects.create(order=self.order, product=self.product, quantity=1, price=Decimal('5.99'))
+
+    def test_order_item_str(self):
+        """Test the __str__ representation of OrderItem."""
+        order_item = OrderItem.objects.create(
+            order=self.order,
+            product=self.product,
+            quantity=4,
+            price=Decimal('5.99')
+        )
+        self.assertEqual(str(order_item), '4 x Notebook')
+        
