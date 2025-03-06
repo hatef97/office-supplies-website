@@ -470,3 +470,40 @@ class CartModelTest(TestCase):
         cart2 = Cart.objects.create()
 
         self.assertNotEqual(cart1.id, cart2.id)
+
+
+
+class CartItemModelTest(TestCase):
+
+    def setUp(self):
+        # Create category and product first, since CartItem depends on Product
+        self.category = Category.objects.create(name="Office Supplies", description="All office-related items")
+        self.product = Product.objects.create(
+            name="Pen",
+            description="A blue ink pen",
+            price=Decimal("1.50"),
+            category=self.category,
+            stock=100
+        )
+        # Create the Cart
+        self.cart = Cart.objects.create()
+
+    def test_cartitem_creation(self):
+        """Test CartItem can be created and is linked to correct cart and product."""
+        cart_item = CartItem.objects.create(cart=self.cart, product=self.product, quantity=2)
+
+        self.assertEqual(cart_item.cart, self.cart)
+        self.assertEqual(cart_item.product, self.product)
+        self.assertEqual(cart_item.quantity, 2)
+
+    def test_cartitem_unique_together(self):
+        """Test that adding the same product to the same cart twice raises an IntegrityError."""
+        CartItem.objects.create(cart=self.cart, product=self.product, quantity=1)
+
+        with self.assertRaises(Exception):  # Depending on DB, this can be IntegrityError or others
+            CartItem.objects.create(cart=self.cart, product=self.product, quantity=2)
+
+    def test_cartitem_str(self):
+        cart_item = CartItem.objects.create(cart=self.cart, product=self.product, quantity=3)
+        self.assertEqual(str(cart_item), '3 x Pen')        
+        
