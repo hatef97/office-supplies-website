@@ -132,6 +132,8 @@ class Comment(models.Model):
     datetime_created = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=2, choices=COMMENT_STATUS, default=COMMENT_STATUS_WAITING)
 
+    def __str__(self):
+        return f"Comment by {self.name} on {self.product.name}"
 
 
 class Cart(models.Model):  

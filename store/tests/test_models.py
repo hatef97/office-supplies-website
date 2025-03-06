@@ -386,4 +386,68 @@ class AddressModelTest(TestCase):
         expected_str = f'{self.customer.full_name}, 123 Main St, Toronto, Ontario'
         actual_str = f'{address.customer.full_name}, {address.street}, {address.city}, {address.province}'
         self.assertEqual(actual_str, expected_str)        
-        
+
+
+
+class CommentModelTest(TestCase):
+
+    def setUp(self):
+        # Create a category and product to associate with the comment
+        self.category = Category.objects.create(name="Office Supplies", description="Office related items.")
+        self.product = Product.objects.create(
+            name="Notebook",
+            description="A high-quality notebook.",
+            price=10.99,
+            category=self.category,
+            stock=100
+        )
+
+    def test_comment_creation(self):
+        """Test that a Comment can be created and fields are set correctly."""
+        comment = Comment.objects.create(
+            product=self.product,
+            name="John Doe",
+            body="Great product, very useful!",
+            status=Comment.COMMENT_STATUS_WAITING
+        )
+
+        self.assertEqual(comment.product, self.product)
+        self.assertEqual(comment.name, "John Doe")
+        self.assertEqual(comment.body, "Great product, very useful!")
+        self.assertEqual(comment.status, Comment.COMMENT_STATUS_WAITING)
+        self.assertIsNotNone(comment.datetime_created)  # Auto set
+
+    def test_comment_status_choices(self):
+        """Test that the status field accepts only the valid choices."""
+        comment = Comment.objects.create(
+            product=self.product,
+            name="Jane Smith",
+            body="Not bad, but could be better.",
+            status=Comment.COMMENT_STATUS_APPROVED
+        )
+        self.assertEqual(comment.status, Comment.COMMENT_STATUS_APPROVED)
+
+        comment.status = Comment.COMMENT_STATUS_NOT_APPROVED
+        comment.save()
+        self.assertEqual(comment.status, Comment.COMMENT_STATUS_NOT_APPROVED)
+
+    def test_default_status(self):
+        """Test that the default status is waiting."""
+        comment = Comment.objects.create(
+            product=self.product,
+            name="Alex",
+            body="This product is amazing!"
+        )
+        self.assertEqual(comment.status, Comment.COMMENT_STATUS_WAITING)
+
+    def test_comment_string_representation(self):
+        """Test string representation if you want to add __str__."""
+        comment = Comment.objects.create(
+            product=self.product,
+            name="Sarah",
+            body="Loved this product!"
+        )
+        expected_str = f"Comment by Sarah on {self.product.name}"
+        actual_str = f"Comment by {comment.name} on {comment.product.name}"
+        self.assertEqual(actual_str, expected_str)
+                
