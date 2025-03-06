@@ -168,3 +168,4 @@ class CartAdmin(admin.ModelAdmin):
 admin.site.register(models.Category)
 admin.site.register(models.PageContent)
 admin.site.register(models.TeamMember)
+admin.site.register(models.Address)
