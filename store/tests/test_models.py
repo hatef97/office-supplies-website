@@ -12,7 +12,6 @@ import uuid
 
 
 
-
 User = get_user_model()
 
 
@@ -506,4 +505,3 @@ class CartItemModelTest(TestCase):
     def test_cartitem_str(self):
         cart_item = CartItem.objects.create(cart=self.cart, product=self.product, quantity=3)
         self.assertEqual(str(cart_item), '3 x Pen')        
-        

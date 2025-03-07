@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser, I
 from rest_framework.filters import OrderingFilter, SearchFilter
 
 from django.shortcuts import get_object_or_404
+from django.db.models import Prefetch
 from django_filters.rest_framework import DjangoFilterBackend
 from django.views.generic import TemplateView
 
@@ -17,14 +18,15 @@ from django.views.generic import TemplateView
 from .models import Category, Product, PageContent, TeamMember, Customer
 from .paginations import DefaultPagination
 from .serializers import *
-
+from .permissions import IsAdminOrReadOnly
+from .signals import order_created
 
 
 
 class ProductViewSet(ModelViewSet):
     serializer_class = ProductSerializer
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminOrReadOnly]
     ordering_fields = ['name', 'price', 'stock']
     search_fields = ['name']
     pagination_class = DefaultPagination
@@ -150,6 +152,10 @@ class CartViewSet(CreateModelMixin,
 class OrderViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
 
+    
+class OrderViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
+    # permission_classes = [IsAuthenticated]
     
     def get_permissions(self):
         if self.request.method in ['PATCH', 'DELETE']:
