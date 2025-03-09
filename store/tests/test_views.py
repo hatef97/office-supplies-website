@@ -1,8 +1,11 @@
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
+
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from store.models import Product, Category
+from django.utils.timezone import now
+
+from store.models import Product, Category, Discount
 from store.serializers import ProductSerializer
 
 
@@ -30,14 +33,30 @@ class ProductViewSetTest(APITestCase):
             password='regularpass123'
         )
         self.client = APIClient() 
-        # Create a category and product
+        # Create a category and discounts and product 
         self.category = Category.objects.create(name="Stationery")
-        self.product = Product.objects.create(
-            name="Notebook",
-            price=5.99,
-            stock=100,
-            category=self.category
+        
+        self.discount1 = Discount.objects.create(
+            discount=10.0,
+            description="Spring Sale"
         )
+
+        self.discount2 = Discount.objects.create(
+            discount=15.0,
+            description="Holiday Discount"
+        )
+
+        self.product = Product.objects.create(
+            name="Smartphone",
+            description="Latest smartphone with high specs",
+            price=599.99,
+            category=self.category,
+            stock=50,
+            created_at=now(),
+        )
+
+        self.product.discounts.add(self.discount1, self.discount2)
+        
         self.product_list_url = reverse('product-list')
         self.product_detail_url = reverse("product-detail", kwargs={"pk": self.product.id})
     
