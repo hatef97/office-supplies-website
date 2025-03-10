@@ -50,21 +50,20 @@ class ProductViewSet(ModelViewSet):
 class CategoryViewSet(ModelViewSet):
     serializer_class = CategorySerializer
     queryset = Category.objects.prefetch_related('products').all()
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminOrReadOnly]
     
 
     def get_serializer_context(self):
         return {'request': self.request}
 
-    def delete(self, request, pk):
-        category = get_object_or_404(Category.objects.prefetch_related('products'),
-                    pk=pk)
-        if category.products.count() > 0:
-            return Response({'error': 'There is some products relating this category. Please remove them first.'},
-                            status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        category.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
+    def destroy(self, request, pk=None):
+        category = get_object_or_404(Category, pk=pk)
+        if category.products.exists():
+            return Response(
+                {'error': 'Cannot delete category with existing products. Remove products first.'},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
+        return super().destroy(request, pk)
 
 
 
