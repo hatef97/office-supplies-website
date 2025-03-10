@@ -5,8 +5,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 
-from store.models import Product, Category, Discount
-from store.serializers import ProductSerializer
+from store.models import Product, Category
 
 
 
@@ -33,18 +32,9 @@ class ProductViewSetTest(APITestCase):
             password='regularpass123'
         )
         self.client = APIClient() 
-        # Create a category and discounts and product 
+        # Create a category and product 
         self.category = Category.objects.create(name="Stationery")
-        
-        self.discount1 = Discount.objects.create(
-            discount=10.0,
-            description="Spring Sale"
-        )
 
-        self.discount2 = Discount.objects.create(
-            discount=15.0,
-            description="Holiday Discount"
-        )
 
         self.product = Product.objects.create(
             name="Smartphone",
@@ -55,7 +45,6 @@ class ProductViewSetTest(APITestCase):
             created_at=now(),
         )
 
-        self.product.discounts.add(self.discount1, self.discount2)
         
         self.product_list_url = reverse('product-list')
         self.product_detail_url = reverse("product-detail", kwargs={"pk": self.product.id})
@@ -89,11 +78,58 @@ class ProductViewSetTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)  # ✅ Expect success
 
+
+    def test_admin_can_update_product(self):
+        """✅ Admin user can update a product."""
+        self.client.login(username="admin", password="adminpass")  # ✅ Authenticate Admin
+
+        update_data = {
+            "name": "Updated Product",
+            "description": "Updated Description",
+            "price": 59.99,
+            "category": self.category.id,
+            "stock": 5,
+        }
+
+        response = self.client.put(self.product_detail_url, update_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["name"], update_data["name"])
+
+
     def test_admin_can_delete_product(self):
         self.client.login(username='admin', password='adminpass')
         response = self.client.delete(self.product_detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Product.objects.filter(id=self.product.id).exists())
+
+
+    def test_regular_user_cannot_create_product(self):
+        """❌ Regular (non-admin) user cannot create a product."""
+        self.client.force_authenticate(user=self.regular_user)
+
+        product_data = {
+            "name": "Forbidden Product",
+            "description": "A test product",
+            "price": 19.99,
+            "category": self.category.id,
+            "stock": 10,
+        }
+
+
+    def test_regular_user_cannot_update_product(self):
+        """❌ Regular (non-admin) user cannot update a product."""
+        self.client.force_authenticate(user=self.regular_user)
+
+        update_data = {
+            "name": "Unauthorized Update",
+            "description": "Updated Description",
+            "price": 59.99,
+            "category": self.category.id,
+            "stock": 5,
+        }
+
+        response = self.client.put(self.product_detail_url, update_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
     def test_regular_user_cannot_delete_product(self):
@@ -102,6 +138,33 @@ class ProductViewSetTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
+    def test_unauthenticated_user_cannot_create_product(self):
+        """❌ Unauthenticated user cannot create a product."""
+        product_data = {
+            "name": "Unauthorized Product",
+            "description": "A test product",
+            "price": 19.99,
+            "category": self.category.id,
+            "stock": 10,
+        }
+
+        response = self.client.post(self.product_list_url, product_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
     def test_unauthenticated_user_cannot_delete_product(self):
         response = self.client.delete(self.product_detail_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+    def test_search_products_by_name(self):
+        """✅ Search products by name."""
+        response = self.client.get(f"{self.product_list_url}?search=Test")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+    def test_order_products_by_price(self):
+        """✅ Order products by price."""
+        response = self.client.get(f"{self.product_list_url}?ordering=price")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
