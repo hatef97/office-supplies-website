@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 
-from store.models import Product, Category
+from store.models import Product, Category, Comment
 
 
 
@@ -245,4 +245,97 @@ class CategoryViewSetTest(APITestCase):
         """❌ Test that a regular user cannot delete a category."""
         self.client.force_authenticate(user=self.regular_user)
         response = self.client.delete(self.category_detail_url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)        
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+
+class CommentViewSetTest(APITestCase):
+    def setUp(self):
+        """Set up test dependencies"""
+        # Create users with unique emails
+        self.admin_user = User.objects.create_superuser(
+            username='admin', email='admin@example.com', password='adminpass'
+        )
+        self.regular_user = User.objects.create_user(
+            username='user', email='user@example.com', password='userpass'
+        )
+        
+        # Create a category
+        self.category = Category.objects.create(name="Office Supplies")
+        
+        # Create a product with a valid category
+        self.product = Product.objects.create(
+            name="Test Product",
+            price=50.0,
+            stock=10,
+            category=self.category  # ✅ Assign a valid category
+        )
+
+        # Create comments
+        self.comment = Comment.objects.create(
+            product=self.product, name=self.regular_user, body="Great product!"
+        )
+
+        # Set URLs
+        self.comment_list_url = reverse('product-comments-list', kwargs={'product_pk': self.product.pk})
+        self.comment_detail_url = reverse('product-comments-detail', kwargs={'product_pk': self.product.pk, 'pk': self.comment.pk})
+        
+        
+    def test_list_comments(self):
+        """Test listing comments for a product"""
+        self.client.force_authenticate(user=self.regular_user)
+        
+        response = self.client.get(self.comment_list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)  # Only one comment exists
+        self.assertEqual(response.data[0]['body'], "Great product!")  # Check content
+
+
+    def test_create_comment_authenticated_user(self):
+        """Test that an authenticated user can create a comment"""
+        self.client.force_authenticate(user=self.regular_user)
+
+        data = {
+                "name": "Test Comment",  
+                "body": "This is a test comment",
+                "product": self.product.id  
+            }
+        response = self.client.post(self.comment_list_url, data, format="json")
+
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Comment.objects.count(), 2)  # Should have 2 comments now
+
+    def test_create_comment_unauthenticated_user(self):
+        """Test that an unauthenticated user cannot create a comment"""
+        response = self.client.post(self.comment_list_url, {"body": "Not logged in!"})
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)  # Should return 401
+
+
+    def test_admin_can_delete_comment(self):
+        """Test that an admin can delete a comment"""
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.delete(self.comment_detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Comment.objects.count(), 0)  # Comment should be deleted
+
+
+    def test_regular_user_cannot_delete_comment(self):
+        """Test that a regular user cannot delete a comment"""
+        self.client.force_authenticate(user=self.regular_user)
+        response = self.client.delete(self.comment_detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)  # Regular user cannot delete comments
+        self.assertEqual(Comment.objects.count(), 1)  # Comment should still exist
+
+
+    def test_unauthenticated_user_cannot_delete_comment(self):
+        """Test that an unauthenticated user cannot delete a comment"""
+        response = self.client.delete(self.comment_detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)  # Should return 401
+        self.assertEqual(Comment.objects.count(), 1)  # Comment should still exist  
+                  

@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, DestroyModelMixin
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.filters import OrderingFilter, SearchFilter
 
 from django.shortcuts import get_object_or_404
@@ -81,20 +81,30 @@ class TeamMemberViewSet(ModelViewSet):
 
 class CommentViewSet(ModelViewSet):
     serializer_class = CommentSerializer    
+    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         product_pk = self.kwargs['product_pk']
-        return Comment.objects.filter(product_id=product_pk).all()
+        return Comment.objects.filter(product_id=product_pk)
 
-    
     def get_serializer_context(self):
         return {'product_pk': self.kwargs['product_pk']}
     
-    
-    def destroy(self, request, pk):
-        Comment = get_object_or_404(Comment, pk=pk)
-        Comment.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    def destroy(self, request, *args, **kwargs):
+        product_pk = kwargs.get('product_pk')  # Get product ID from URL
+        pk = kwargs.get('pk')  # Get comment ID
+
+        # Ensure the comment belongs to the correct product
+        comment = get_object_or_404(Comment, pk=pk, product_id=product_pk)
+        
+        if not request.user.is_staff:
+            return Response(
+                {"detail": "You do not have permission to delete this comment."},
+                            status=status.HTTP_403_FORBIDDEN
+                            )
+        
+        comment.delete()
+        return Response({"message": "Comment deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
 
