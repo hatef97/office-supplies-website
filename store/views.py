@@ -13,12 +13,10 @@ from django.db.models import Prefetch
 from django_filters.rest_framework import DjangoFilterBackend
 from django.views.generic import TemplateView
 
-
-
 from .models import Category, Product, PageContent, TeamMember, Customer
 from .paginations import DefaultPagination
 from .serializers import *
-from .permissions import IsAdminOrReadOnly
+from .permissions import IsAdminOrReadOnly, SendPrivateEmailToCustomerPermission
 from .signals import order_created
 
 
@@ -126,8 +124,11 @@ class CustomerViewSet(ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
-
-
+        
+    @action(detail=True, permission_classes=[SendPrivateEmailToCustomerPermission])    
+    def send_private_email(self, request, pk):
+        return Response(f'Sending email to customer id={pk=}')
+    
 
 class CartItemViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
