@@ -160,10 +160,6 @@ class CartViewSet(CreateModelMixin,
     permission_classes = [IsAuthenticated]
     
 
-
-class OrderViewSet(ModelViewSet):
-    http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
-
     
 class OrderViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'options', 'head']
@@ -213,7 +209,7 @@ class OrderViewSet(ModelViewSet):
         order_created.send_robust(self.__class__, order=created_order)
         
         serializer = OrderSerializer(created_order)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     
 
