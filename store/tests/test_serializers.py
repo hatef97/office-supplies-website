@@ -148,3 +148,69 @@ class ProductSerializerTest(TestCase):
         product.save()
         
         self.assertEqual(product.slug, "wireless-headphones")
+
+
+
+class CommentSerializerTest(TestCase):
+
+    def setUp(self):
+        """Set up test data before each test runs."""
+        self.category = Category.objects.create(name="Electronics", description="Electronic items")
+
+        self.product = Product.objects.create(
+            name="Laptop",
+            description="A high-end gaming laptop.",
+            price=1500.00,
+            category=self.category,
+            stock=10
+        )
+
+        self.comment = Comment.objects.create(
+            product=self.product,
+            name="John Doe",
+            body="Great product!"
+        )
+
+
+    def test_valid_comment_serialization(self):
+        """Test that valid comment data serializes correctly."""
+        serializer = CommentSerializer(instance=self.comment)
+        
+        expected_data = {
+            "id": self.comment.id,
+            "name": "John Doe",
+            "body": "Great product!"
+        }
+
+        self.assertEqual(serializer.data, expected_data)
+
+
+    def test_create_comment_with_product_pk(self):
+        """Test that a comment is created with the correct product_id from context."""
+        data = {
+            "name": "Jane Doe",
+            "body": "Amazing quality!"
+        }
+
+        serializer = CommentSerializer(data=data, context={"product_pk": self.product.id})
+        self.assertTrue(serializer.is_valid())
+
+        comment = serializer.save()
+
+        self.assertEqual(comment.name, "Jane Doe")
+        self.assertEqual(comment.body, "Amazing quality!")
+        self.assertEqual(comment.product_id, self.product.id)  # ✅ Ensures correct product association
+
+
+    def test_missing_product_pk_in_context(self):
+        """Test that a missing product_pk in context raises an error."""
+        data = {
+            "name": "Jane Doe",
+            "body": "Amazing quality!"
+        }
+
+        serializer = CommentSerializer(data=data)  # ❌ No 'product_pk' in context
+
+        with self.assertRaises(KeyError):
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
