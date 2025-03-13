@@ -5,7 +5,8 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 
-from store.models import Product, Category, Comment
+from store.models import Product, Category, Comment, Customer  
+from store.serializers import CustomerSerializer
 
 
 
@@ -35,7 +36,6 @@ class ProductViewSetTest(APITestCase):
         # Create a category and product 
         self.category = Category.objects.create(name="Stationery")
 
-
         self.product = Product.objects.create(
             name="Smartphone",
             description="Latest smartphone with high specs",
@@ -45,7 +45,6 @@ class ProductViewSetTest(APITestCase):
             created_at=now(),
         )
 
-        
         self.product_list_url = reverse('product-list')
         self.product_detail_url = reverse("product-detail", kwargs={"pk": self.product.id})
     
@@ -183,17 +182,20 @@ class CategoryViewSetTest(APITestCase):
         self.category_list_url = reverse('category-list')
         self.category_detail_url = reverse('category-detail', kwargs={'pk': self.category1.pk})
 
+
     def test_list_categories(self):
         """✅ Test retrieving the list of categories."""
         response = self.client.get(self.category_list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 2)
 
+
     def test_retrieve_category(self):
         """✅ Test retrieving a single category."""
         response = self.client.get(self.category_detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['name'], self.category1.name)
+
 
     def test_admin_can_create_category(self):
         """✅ Test that an admin user can create a category."""
@@ -203,12 +205,14 @@ class CategoryViewSetTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(Category.objects.filter(name="Fashion").exists())
 
+
     def test_non_admin_cannot_create_category(self):
         """❌ Test that a regular user cannot create a category."""
         self.client.force_authenticate(user=self.regular_user)
         data = {"name": "Fashion"}
         response = self.client.post(self.category_list_url, data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
 
     def test_admin_can_update_category(self):
         """✅ Test that an admin user can update a category."""
@@ -219,12 +223,14 @@ class CategoryViewSetTest(APITestCase):
         self.category1.refresh_from_db()
         self.assertEqual(self.category1.name, "Updated Electronics")
 
+
     def test_non_admin_cannot_update_category(self):
         """❌ Test that a regular user cannot update a category."""
         self.client.force_authenticate(user=self.regular_user)
         data = {"name": "Updated Electronics"}
         response = self.client.put(self.category_detail_url, data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
 
     def test_cannot_delete_category_with_products(self):
         """❌ Test that a category with products cannot be deleted."""
@@ -234,12 +240,14 @@ class CategoryViewSetTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
         self.assertIn('Cannot delete category with existing products. Remove products first.', response.data['error'])
 
+
     def test_admin_can_delete_empty_category(self):
         """✅ Test that an admin user can delete a category without products."""
         self.client.force_authenticate(user=self.admin_user)
         response = self.client.delete(self.category_detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Category.objects.filter(pk=self.category1.pk).exists())
+
 
     def test_non_admin_cannot_delete_category(self):
         """❌ Test that a regular user cannot delete a category."""
@@ -307,6 +315,7 @@ class CommentViewSetTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Comment.objects.count(), 2)  # Should have 2 comments now
 
+
     def test_create_comment_unauthenticated_user(self):
         """Test that an unauthenticated user cannot create a comment"""
         response = self.client.post(self.comment_list_url, {"body": "Not logged in!"})
@@ -338,4 +347,105 @@ class CommentViewSetTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)  # Should return 401
         self.assertEqual(Comment.objects.count(), 1)  # Comment should still exist  
+
+
+
+class CustomerViewSetTest(APITestCase):
+    
+    def setUp(self):
+        self.client = APIClient()
+
+        # Clear old data before each test
+        User.objects.all().delete()
+        Customer.objects.all().delete()
+
+        # Create admin user
+        self.admin_user = User.objects.create_superuser(
+            username='admin',
+            email='admin@example.com',
+            password='adminpass'
+        )
+
+        # Create regular customer user
+        self.customer_user = User.objects.create_user(
+            username='customer',
+            email='customer@example.com',
+            password='password'
+        )
+
+        # Create the Customer first
+        self.customer, created = Customer.objects.get_or_create(
+            user=self.customer_user
+        )
+
+        # Set URLs
+        self.customer_list = reverse('customer-list')
+        self.customer_me = reverse('customer-me')
+        self.customer_send_private_email = reverse('customer-send-private-email', args=[self.customer.pk])
+            
+    def test_me_get_authenticated(self):
+        """Test that an authenticated user can retrieve their customer profile."""
+        self.client.force_authenticate(user=self.customer_user)
+
+        response = self.client.get(self.customer_me)
+
+        # Ensure request was successful
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Ensure the response contains customer data
+        self.assertEqual(response.data["user"], self.customer_user.id)
+        self.assertEqual(response.data["phone_number"], self.customer.phone_number)
+        self.assertEqual(response.data["birth_date"], str(self.customer.birth_date) if self.customer.birth_date else None)
+
+    def test_me_put_authenticated(self):
+        """Test that an authenticated user can update their customer profile."""
+        url = reverse('customer-me')
+        self.client.force_authenticate(user=self.customer_user)
+
+        # New data
+        updated_data = {
+            "phone_number": "987-654-3210",
+            "birth_date": "1995-05-15"
+        }
+
+        # Send PUT request
+        response = self.client.put(url, updated_data)
+
+        # Ensure request was successful
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Refresh customer from database
+        self.customer.refresh_from_db()
+
+        # Assert changes
+        self.assertEqual(self.customer.phone_number, "987-654-3210")
+        self.assertEqual(str(self.customer.birth_date), "1995-05-15")
+
+
+    def test_me_unauthenticated(self):
+        """Test that an unauthenticated user cannot access 'me' endpoint."""
+        self.client.logout()
+        response = self.client.get(self.customer_me)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    
+    def test_send_private_email_permission(self):
+        """Test that only users with SendPrivateEmailToCustomerPermission can call send_private_email action."""
+        self.client.force_authenticate(user=self.customer_user)
+        response = self.client.get(self.customer_send_private_email)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)  # Assuming regular users can't send emails
+    
+    
+    def test_admin_can_access_customer_list(self):
+        """Test that an admin user can access the customer list."""
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.get(self.customer_list)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    
+    def test_non_admin_cannot_access_customer_list(self):
+        """Test that a non-admin user cannot access the customer list."""
+        self.client.force_authenticate(user=self.customer_user)
+        response = self.client.get(self.customer_list)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
                   
