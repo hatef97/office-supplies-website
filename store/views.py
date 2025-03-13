@@ -132,6 +132,7 @@ class CustomerViewSet(ModelViewSet):
 
 class CartItemViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
+    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         cart_pk = self.kwargs['cart_pk']
