@@ -157,6 +157,7 @@ class CartViewSet(CreateModelMixin,
                    GenericViewSet):
     serializer_class = CartSerializer 
     queryset = Cart.objects.prefetch_related('items__product').all()
+    permission_classes = [IsAuthenticated]
     
 
 
