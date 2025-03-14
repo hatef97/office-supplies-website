@@ -1,3 +1,5 @@
+import uuid
+
 from rest_framework.exceptions import ValidationError
 
 from django.test import TestCase
@@ -513,3 +515,65 @@ class CartItemSerializerTest(TestCase):
         expected_product_data = CartProductSeializer(instance=self.product).data
 
         self.assertEqual(serializer.data["product"], expected_product_data)  # ✅ Matches expected nested product data
+
+
+
+class CartSerializerTest(TestCase):
+
+    def setUp(self):
+        """Set up test data before each test runs."""
+        self.cart = Cart.objects.create()
+
+        self.category = Category.objects.create(name="Electronics", description="Electronic items")
+
+        self.product1 = Product.objects.create(
+            name="Laptop",
+            description="A high-end gaming laptop.",
+            price=Decimal("1000.00"),
+            category=self.category,
+            stock=10
+        )
+        self.product2 = Product.objects.create(
+            name="Phone",
+            description="Iphone 16 pro max",
+            price=Decimal("500.00"),
+            category=self.category,
+            stock=10
+        )
+
+        self.cart_item1 = CartItem.objects.create(cart=self.cart, product=self.product1, quantity=2)  # 2 * 1000 = 2000
+        self.cart_item2 = CartItem.objects.create(cart=self.cart, product=self.product2, quantity=3)  # 3 * 500 = 1500
+
+
+    def test_valid_cart_serialization(self):
+        """Test that a valid cart serializes correctly."""
+        serializer = CartSerializer(instance=self.cart)
+
+        expected_data = {
+            "id": str(self.cart.id),  # ✅ Convert UUID to string to match serializer output
+            "items": CartItemSerializer(instance=self.cart.items.all(), many=True).data,
+            "total_price": Decimal("3500.00") # ✅ 2000 + 1500 = 3500.00
+        }
+
+        self.assertEqual(serializer.data, expected_data)
+
+
+    def test_total_price_calculation(self):
+        """Test that total_price is calculated correctly."""
+        serializer = CartSerializer(instance=self.cart)
+        self.assertEqual(serializer.data["total_price"], 3500.00)  # ✅ Correct calculation
+
+
+    def test_empty_cart_total_price(self):
+        """Test that an empty cart returns a total price of 0."""
+        empty_cart = Cart.objects.create()
+        serializer = CartSerializer(instance=empty_cart)
+        self.assertEqual(serializer.data["total_price"], 0.00)  # ✅ Should return 0
+
+
+    def test_cart_items_nested_serialization(self):
+        """Test that the items field is serialized correctly."""
+        serializer = CartSerializer(instance=self.cart)
+        expected_items_data = CartItemSerializer(instance=self.cart.items.all(), many=True).data
+
+        self.assertEqual(serializer.data["items"], expected_items_data)  # ✅ Matches expected nested items data
