@@ -465,4 +465,51 @@ class UpdateCartItemSerializerTest(TestCase):
         updated_cart_item = serializer.save()
 
         self.assertEqual(updated_cart_item.quantity, 1000)  # ✅ Quantity should be updated
-        
+
+
+
+class CartItemSerializerTest(TestCase):
+
+    def setUp(self):
+        """Set up test data before each test runs."""
+        self.cart = Cart.objects.create()
+
+        self.category = Category.objects.create(name="Electronics", description="Electronic items")
+
+        self.product = Product.objects.create(
+            name="Laptop",
+            description="A high-end gaming laptop.",
+            price=50.00,
+            category=self.category,
+            stock=10
+        )
+
+        self.cart_item = CartItem.objects.create(cart=self.cart, product=self.product, quantity=3)
+
+
+    def test_valid_cart_item_serialization(self):
+        """Test that valid cart item data serializes correctly."""
+        serializer = CartItemSerializer(instance=self.cart_item)
+
+        expected_data = {
+            "id": self.cart_item.id,
+            "product": CartProductSeializer(instance=self.product).data,  # ✅ Nested product serialization
+            "quantity": 3,
+            "item_total": 150.00  # ✅ 3 * 50.00 = 150.00
+        }
+
+        self.assertEqual(serializer.data, expected_data)
+
+
+    def test_item_total_calculation(self):
+        """Test that item_total is calculated correctly."""
+        serializer = CartItemSerializer(instance=self.cart_item)
+        self.assertEqual(serializer.data["item_total"], 150.00)  # ✅ 3 * 50.00
+
+
+    def test_product_nested_serialization(self):
+        """Test that the product field is serialized correctly."""
+        serializer = CartItemSerializer(instance=self.cart_item)
+        expected_product_data = CartProductSeializer(instance=self.product).data
+
+        self.assertEqual(serializer.data["product"], expected_product_data)  # ✅ Matches expected nested product data
