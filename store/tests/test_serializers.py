@@ -772,4 +772,48 @@ class OrderCreateSerializerTest(TestCase):
 
         serializer.save()
         self.assertFalse(Cart.objects.filter(id=self.cart.id).exists())  # ✅ Cart should be deleted after order creation
+
+
+
+
+
+class OrderUpdateSerializerTest(TestCase):
+
+    def setUp(self):
+        """Set up test data before each test runs."""
+        self.user = User.objects.create_user(username="testuser", email="test@example.com", password="password123")
+
+        self.customer, created = Customer.objects.get_or_create(
+            user=self.user,
+            defaults={"phone_number": "1234567890", "birth_date": "1990-01-01"}
+        )
         
+        self.order = Order.objects.create(customer=self.customer, status="u")  # Default: Unpaid
+
+
+    def test_valid_status_update(self):
+        """Test that a valid status update works correctly."""
+        serializer = OrderUpdateSerializer(instance=self.order, data={"status": "p"}, partial=True)
+        self.assertTrue(serializer.is_valid())
+
+        updated_order = serializer.save()
+        self.assertEqual(updated_order.status, "p")  # ✅ Status should be updated to Paid
+
+
+    def test_invalid_status_update(self):
+        """Test that an invalid status raises a validation error."""
+        serializer = OrderUpdateSerializer(instance=self.order, data={"status": "invalid_status"}, partial=True)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("status", serializer.errors)
+
+
+    def test_partial_update_does_not_modify_other_fields(self):
+        """Test that updating status does not modify other fields."""
+        old_datetime_created = self.order.datetime_created
+
+        serializer = OrderUpdateSerializer(instance=self.order, data={"status": "c"}, partial=True)
+        self.assertTrue(serializer.is_valid())
+
+        updated_order = serializer.save()
+        self.assertEqual(updated_order.status, "c")  # ✅ Status should be updated to Canceled
+        self.assertEqual(updated_order.datetime_created, old_datetime_created)  # ✅ Other fields remain unchanged
