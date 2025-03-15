@@ -577,3 +577,58 @@ class CartSerializerTest(TestCase):
         expected_items_data = CartItemSerializer(instance=self.cart.items.all(), many=True).data
 
         self.assertEqual(serializer.data["items"], expected_items_data)  # ✅ Matches expected nested items data
+
+
+
+class OrderItemSerializerTest(TestCase):
+
+    def setUp(self):
+        """Set up test data before each test runs."""
+        self.user = User.objects.create_user(username="testuser", email="test@example.com", password="password123")
+
+        self.customer, created = Customer.objects.get_or_create(
+            user=self.user,
+            defaults={"phone_number": "1234567890", "birth_date": "1990-01-01"}
+        )
+
+        self.order = Order.objects.create(customer=self.customer)
+
+        self.category = Category.objects.create(name="Electronics", description="Electronic items")
+
+        self.product = Product.objects.create(
+            name="Laptop",
+            description="A high-end gaming laptop.",
+            price=1500.00,
+            category=self.category,
+            stock=10
+        )
+
+        self.order_item = OrderItem.objects.create(order=self.order, product=self.product, quantity=2, price=Decimal("1500.00"))
+
+
+    def test_valid_order_item_serialization(self):
+        """Test that a valid order item serializes correctly."""
+        serializer = OrderItemSerializer(instance=self.order_item)
+
+        expected_data = {
+            "id": self.order_item.id,
+            "product": CartProductSeializer(instance=self.product).data,  # ✅ Nested product serialization
+            "quantity": 2,
+            "price": Decimal("1500.00")  # ✅ Correctly formatted price
+        }
+
+        self.assertEqual(serializer.data, expected_data)
+
+
+    def test_product_nested_serialization(self):
+        """Test that the product field is serialized correctly."""
+        serializer = OrderItemSerializer(instance=self.order_item)
+        expected_product_data = CartProductSeializer(instance=self.product).data
+
+        self.assertEqual(serializer.data["product"], expected_product_data)  # ✅ Matches expected nested product data
+
+
+    def test_price_field_serialization(self):
+        """Test that the price field correctly represents the item's price."""
+        serializer = OrderItemSerializer(instance=self.order_item)
+        self.assertEqual(serializer.data["price"], Decimal("1500.00"))  # ✅ Ensures correct price formatting
