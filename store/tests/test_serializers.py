@@ -1,11 +1,13 @@
 import uuid
 
 from rest_framework.exceptions import ValidationError
+from rest_framework.utils.serializer_helpers import ReturnDict
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
 from decimal import Decimal
+from datetime import timezone
 
 from store.serializers import *
 from store.models import *
@@ -632,3 +634,73 @@ class OrderItemSerializerTest(TestCase):
         """Test that the price field correctly represents the item's price."""
         serializer = OrderItemSerializer(instance=self.order_item)
         self.assertEqual(serializer.data["price"], Decimal("1500.00"))  # ✅ Ensures correct price formatting
+
+
+
+class OrderSerializerTest(TestCase):
+
+    def setUp(self):
+        """Set up test data before each test runs."""
+        self.user = User.objects.create_user(username="testuser", email="test@example.com", password="password123")
+
+        self.customer, created = Customer.objects.get_or_create(
+            user=self.user,
+            defaults={"phone_number": "1234567890", "birth_date": "1990-01-01"}
+        )
+
+        self.order = Order.objects.create(customer=self.customer, status="p")  # Paid status
+
+        self.category = Category.objects.create(name="Electronics", description="Electronic items")
+
+        self.product1 = Product.objects.create(
+            name="Laptop",
+            description="A high-end gaming laptop.",
+            price=Decimal("1500.00"),
+            category=self.category,
+            stock=10
+        )
+        self.product2 = Product.objects.create(
+            name="Phone",
+            description="Iphone 16 pro max",
+            price=Decimal("400.00"),
+            category=self.category,
+            stock=10
+        )
+
+        self.order_item1 = OrderItem.objects.create(order=self.order, product=self.product1, quantity=1, price=Decimal("1500.00"))
+        self.order_item2 = OrderItem.objects.create(order=self.order, product=self.product2, quantity=2, price=Decimal("800.00"))
+
+
+    def test_valid_order_serialization(self):
+        """Test that a valid order serializes correctly."""
+        serializer = OrderSerializer(instance=self.order)
+
+        expected_data = {
+            "id": self.order.id,
+            "status": "p",  # Paid status
+            "datetime_created": self.order.datetime_created.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),  # ✅ Ensures correct datetime format
+            "items": OrderItemSerializer(instance=self.order.items.all(), many=True).data  # ✅ Nested items
+        }
+
+        self.assertEqual(serializer.data, expected_data)
+
+
+    def test_order_items_nested_serialization(self):
+        """Test that the items field is serialized correctly."""
+        serializer = OrderSerializer(instance=self.order)
+        expected_items_data = OrderItemSerializer(instance=self.order.items.all(), many=True).data
+
+        self.assertEqual(serializer.data["items"], expected_items_data)  # ✅ Matches expected nested items data
+
+
+    def test_order_status_serialization(self):
+        """Test that the status field is correctly serialized."""
+        serializer = OrderSerializer(instance=self.order)
+        self.assertEqual(serializer.data["status"], "p")  # ✅ Ensures correct status representation
+
+
+    def test_order_datetime_serialization(self):
+        """Test that the datetime_created field is serialized correctly."""
+        serializer = OrderSerializer(instance=self.order)
+        expected_datetime = self.order.datetime_created.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+        self.assertEqual(serializer.data["datetime_created"], expected_datetime)  # ✅ Ensures correct datetime format
