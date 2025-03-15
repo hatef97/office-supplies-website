@@ -25,7 +25,7 @@ products_router = routers.NestedDefaultRouter(router, 'products', lookup='produc
 products_router.register('comments', views.CommentViewSet, basename='product-comments')
 
 
-urlpatterns = router.urls + products_router.urls + cart_items_router.urls + [
+urlpatterns = router.urls + products_router.urls + cart_items_router.urls + product_router.urls + [
     path('about/', views.AboutView.as_view(), name='about'),
     path('terms/', views.TermsView.as_view(), name='terms'),
 ]
