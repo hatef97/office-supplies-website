@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'djoser',
     'rest_framework.authtoken',
     'django_filters',
+    'drf_yasg',
     # My apps
     'store',
     'core',
@@ -160,6 +161,7 @@ REST_FRAMEWORK = {
 
 DJOSER = {
     'SERIALIZERS': {
+        'user': 'core.serializers.UserSerializer',
         'user_create': 'core.serializers.UserCreateSerializer',
         'current_user': 'core.serializers.UserSerializer'
     }

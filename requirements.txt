@@ -12,8 +12,10 @@ djangorestframework==3.15.2
 djangorestframework_simplejwt==5.4.0
 djoser==2.3.1
 drf-nested-routers==0.94.1
+drf-yasg==1.21.10
 filelock==3.17.0
 idna==3.10
+inflection==0.5.1
 mysqlclient==2.2.7
 oauthlib==3.2.2
 packaging==24.2
@@ -24,6 +26,8 @@ pycparser==2.22
 PyJWT==2.10.1
 python-dotenv==1.0.1
 python3-openid==3.2.0
+pytz==2025.1
+PyYAML==6.0.2
 requests==2.32.3
 requests-oauthlib==2.0.0
 social-auth-app-django==5.4.3
@@ -31,5 +35,6 @@ social-auth-core==4.5.6
 sqlparse==0.5.3
 typing_extensions==4.12.2
 tzdata==2025.1
+uritemplate==4.1.1
 urllib3==2.3.0
 virtualenv==20.29.1
