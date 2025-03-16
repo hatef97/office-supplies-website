@@ -49,3 +49,30 @@ class UserCreateSerializerTest(TestCase):
         self.assertIn('username', serializer.errors)
         self.assertIn('email', serializer.errors)
         self.assertIn('password', serializer.errors)
+
+
+
+class UserSerializerTest(TestCase):
+
+    def setUp(self):
+        """Set up a user instance for testing."""
+        self.user = User.objects.create_user(
+            username='existinguser',
+            email='existinguser@example.com',
+            password='securepassword123',
+            first_name='Jane',
+            last_name='Doe'
+        )
+
+
+    def test_user_serialization(self):
+        """Test that an existing user serializes correctly."""
+        serializer = UserSerializer(instance=self.user)
+        expected_data = {
+            'id': self.user.id,
+            'username': 'existinguser',
+            'email': 'existinguser@example.com',
+            'first_name': 'Jane',
+            'last_name': 'Doe'
+        }
+        self.assertEqual(serializer.data, expected_data)
